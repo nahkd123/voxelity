@@ -1,0 +1,26 @@
+plugins {
+	id 'fabric-loom' version '1.9-SNAPSHOT'
+}
+
+repositories {
+}
+
+dependencies {
+	minecraft 'com.mojang:minecraft:1.21.4'
+	mappings 'net.fabricmc:yarn:1.21.4+build.7:v2'
+	modImplementation 'net.fabricmc:fabric-loader:0.16.9'
+
+	modImplementation 'net.fabricmc.fabric-api:fabric-api:0.114.0+1.21.4'
+	implementation include(project(':voxelity-core'))
+}
+
+loom {
+	splitEnvironmentSourceSets()
+
+	mods {
+		'voxelity' {
+			sourceSet sourceSets.main
+			sourceSet sourceSets.client
+		}
+	}
+}

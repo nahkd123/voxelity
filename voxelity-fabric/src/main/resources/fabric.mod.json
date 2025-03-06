@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "voxelity",
+	"version": "0.0.1",
+	"name": "Voxelity",
+	"description": "Interactive world editing",
+	"authors": ["nahkd123"],
+	"contact": {
+		"homepage": "https://github.com/nahkd123/voxelity",
+		"sources": "https://github.com/nahkd123/voxelity.git"
+	},
+	"license": "MIT",
+	"icon": "assets/voxelity/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": ["io.github.nahkd123.voxelity.fabric.VoxelityFabric"],
+		"client": ["io.github.nahkd123.voxelity.fabric.client.VoxelityFabricClient"]
+	},
+	"mixins": [
+		"voxelity.mixins.json",
+		{"config": "voxelity.client.mixins.json", "environment": "client"}
+	],
+	"depends": {
+		"fabricloader": ">=0.16.9",
+		"minecraft": ">=1.21.4",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

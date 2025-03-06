@@ -1,0 +1,17 @@
+subprojects {
+	apply plugin: 'java-library'
+
+	testing {
+    	suites {
+        	test {
+	            useJUnitJupiter('5.10.0')
+        	}
+	    }
+	}
+
+	java {
+    	toolchain {
+        	languageVersion = JavaLanguageVersion.of(21)
+    	}
+	}
+}

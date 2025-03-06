@@ -1,0 +1,14 @@
+# Eclipse JDT + Eclipse Buildship
+/**/.classpath
+/**/.project
+/**/.settings
+/*/bin/
+
+# Gradle
+/*/.gradle/
+/.gradle/
+/*/build/
+/build/
+
+# Minecraft
+/voxelity-fabric/run
