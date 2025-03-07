@@ -13,7 +13,7 @@ public abstract class MinecraftServerMixin implements MinecraftServerBridge {
 	private FabricVoxelityServer voxelity = null;
 
 	@Override
-	public FabricVoxelityServer getVoxelity() {
+	public FabricVoxelityServer voxelity$get() {
 		if (voxelity == null) voxelity = new FabricVoxelityServer((MinecraftServer) (Object) this);
 		return voxelity;
 	}

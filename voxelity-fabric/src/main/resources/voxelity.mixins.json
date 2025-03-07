@@ -6,9 +6,12 @@
 		"BlockMixin",
 		"BlockStateMixin",
 		"BlockViewMixin",
+		"ClientConnectionMixin",
 		"IdentifierMixin",
 		"MinecraftServerMixin",
 		"ModifiableWorldMixin",
+		"PlayerManagerMixin",
+		"ServerCommonNetworkHandlerMixin",
 		"ServerPlayerEntityMixin",
 		"ServerWorldMixin"
 	],
