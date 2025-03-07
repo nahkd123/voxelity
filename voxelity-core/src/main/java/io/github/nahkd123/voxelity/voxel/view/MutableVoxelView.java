@@ -1,4 +1,4 @@
-package io.github.nahkd123.voxelity.world;
+package io.github.nahkd123.voxelity.voxel.view;
 
 import io.github.nahkd123.voxelity.voxel.Voxel;
 

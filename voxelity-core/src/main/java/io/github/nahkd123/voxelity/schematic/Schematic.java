@@ -13,11 +13,12 @@ import io.github.nahkd123.voxelity.math.Box3i;
 import io.github.nahkd123.voxelity.math.Vec3i;
 import io.github.nahkd123.voxelity.registry.Registries;
 import io.github.nahkd123.voxelity.utils.packed.PackedArray;
+import io.github.nahkd123.voxelity.voxel.Volume;
 import io.github.nahkd123.voxelity.voxel.Voxel;
 import io.github.nahkd123.voxelity.voxel.Voxels;
-import io.github.nahkd123.voxelity.world.MutableVoxelView;
-import io.github.nahkd123.voxelity.world.VoxelBuffer;
-import io.github.nahkd123.voxelity.world.VoxelView;
+import io.github.nahkd123.voxelity.voxel.view.MutableVoxelView;
+import io.github.nahkd123.voxelity.voxel.view.VoxelBuffer;
+import io.github.nahkd123.voxelity.voxel.view.VoxelView;
 
 /**
  * <p>
@@ -33,7 +34,7 @@ import io.github.nahkd123.voxelity.world.VoxelView;
  * {@link #translateBounds(int, int, int)}.
  * </p>
  * 
- * @see #copyFrom(VoxelView, Box3i, Vec3i)
+ * @see #copyFrom(VoxelView, Box3i, Vec3i, Volume)
  * @see #serialize(DataOutput)
  * @see #deserialize(DataInput, Voxels, Registries)
  */
@@ -112,41 +113,90 @@ public interface Schematic extends VoxelView {
 		return deserialize(stream, platform.getVoxels(), platform.getRegistries());
 	}
 
-	static PackedArraySchematic copyFrom(VoxelView view, Box3i bounds, Vec3i origin) {
-		Vec3i min = bounds.min().sub(origin);
-		Vec3i max = bounds.max().sub(origin);
+	// Variable naming conventions:
+	// - sx/sy/sz: Schematic coords
+	// - wx/wy/wz: World/view coords
+
+	/**
+	 * <p>
+	 * Copy an area in {@link VoxelView} into a schematic.
+	 * </p>
+	 * 
+	 * @param view   The voxel view.
+	 * @param bounds The volume in voxel view to copy.
+	 * @param origin The origin in the voxel view.
+	 * @param mask   Selection mask. Use {@code null} to select everything in
+	 *               bounds, or a mask to only retain voxels occupied by the mask.
+	 *               If the voxel is not occupied by the mask, the schematic will
+	 *               represent it as void voxel.
+	 * @return The schematic, ready to be serialized or paste to
+	 *         {@link MutableVoxelView}.
+	 */
+	static PackedArraySchematic copyFrom(VoxelView view, Box3i bounds, Vec3i origin, Volume mask) {
+		Vec3i wMin = bounds.min();
+		Vec3i wMax = bounds.max();
 		Vec3i size = bounds.size();
 		List<Voxel> palette = new ArrayList<>();
 		Map<Voxel, Integer> reversePalette = new HashMap<>();
 		int volume = size.x() * size.y() * size.z();
 		PackedArray array = PackedArray.create(volume, volume);
 
-		for (int y = min.x(); y <= max.x(); y++) {
-			for (int z = min.z(); z <= max.z(); z++) {
-				for (int x = min.x(); x <= max.x(); x++) {
-					Voxel voxel = view.get(x + origin.x(), y + origin.y(), z + origin.z());
+		for (int wy = wMin.x(); wy <= wMax.x(); wy++) {
+			for (int wz = wMin.z(); wz <= wMax.z(); wz++) {
+				for (int wx = wMin.x(); wx <= wMax.x(); wx++) {
+					int sx = wx - origin.x();
+					int sy = wy - origin.y();
+					int sz = wz - origin.z();
+					int arrayIdx = sy * size.x() * size.z() + sz * size.x() + sx;
+
+					if (mask != null && !mask.isOccupied(wx, wy, wz)) {
+						array.set(arrayIdx, 0);
+						continue;
+					}
+
+					Voxel voxel = view.get(wx, wy, wz);
 					int i = voxel == null ? 0 : reversePalette.computeIfAbsent(voxel, v -> {
 						palette.add(v);
 						return palette.size();
 					});
-					array.set(y * size.x() * size.z() + z * size.x() + x, i);
+					array.set(arrayIdx, i);
 				}
 			}
 		}
 
-		return new PackedArraySchematic(palette, array, min, size);
+		return new PackedArraySchematic(palette, array, wMin, size);
 	}
 
-	default void pasteTo(MutableVoxelView view, Vec3i translate) {
+	/**
+	 * <p>
+	 * Paste this schematic to mutable voxel view.
+	 * </p>
+	 * 
+	 * @param view      The mutable voxel view.
+	 * @param translate Translate the schematic by some amount.
+	 * @param mask      Selection mask. See
+	 *                  {@link #copyFrom(VoxelView, Box3i, Vec3i, Volume)} for more
+	 *                  info.
+	 */
+	default void pasteTo(MutableVoxelView view, Vec3i translate, Volume mask) {
 		Box3i bounds = getBounds();
-		Vec3i min = bounds.min();
-		Vec3i max = bounds.max();
+		Vec3i sMin = bounds.min();
+		Vec3i sMax = bounds.max();
 
-		for (int y = min.x(); y <= max.x(); y++) {
-			for (int z = min.z(); z <= max.z(); z++) {
-				for (int x = min.x(); x <= max.x(); x++) {
-					Voxel voxel = get(x, y, z);
-					if (voxel != null) view.set(x + translate.x(), y + translate.y(), z + translate.z(), voxel);
+		for (int sy = sMin.x(); sy <= sMax.x(); sy++) {
+			for (int sz = sMin.z(); sz <= sMax.z(); sz++) {
+				for (int sx = sMin.x(); sx <= sMax.x(); sx++) {
+					Voxel voxel = get(sx, sy, sz);
+					if (voxel == null) continue;
+
+					if (mask != null) {
+						int wx = sx + translate.x();
+						int wy = sy + translate.y();
+						int wz = sz + translate.z();
+						if (mask.isOccupied(wx, wy, wz)) continue;
+					}
+
+					view.set(sx + translate.x(), sy + translate.y(), sz + translate.z(), voxel);
 				}
 			}
 		}

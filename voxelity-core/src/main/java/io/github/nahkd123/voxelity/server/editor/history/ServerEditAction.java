@@ -41,13 +41,13 @@ public class ServerEditAction extends ServerAction {
 
 	@Override
 	protected Task onUndo() {
-		original.pasteTo(getTarget(), Vec3i.ZERO);
+		original.pasteTo(getTarget(), Vec3i.ZERO, null);
 		return ImmediateTask.FINISHED;
 	}
 
 	@Override
 	protected Task onRedo() {
-		modified.pasteTo(target, Vec3i.ZERO);
+		modified.pasteTo(target, Vec3i.ZERO, null);
 		return ImmediateTask.FINISHED;
 	}
 

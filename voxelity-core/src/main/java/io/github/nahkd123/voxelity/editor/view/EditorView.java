@@ -1,6 +1,6 @@
 package io.github.nahkd123.voxelity.editor.view;
 
-import io.github.nahkd123.voxelity.world.VoxelView;
+import io.github.nahkd123.voxelity.voxel.view.VoxelView;
 import io.github.nahkd123.voxelity.world.World;
 
 /**

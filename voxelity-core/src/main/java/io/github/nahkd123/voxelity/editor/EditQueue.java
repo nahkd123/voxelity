@@ -5,7 +5,7 @@ import io.github.nahkd123.voxelity.math.Box3i;
 import io.github.nahkd123.voxelity.task.Task;
 import io.github.nahkd123.voxelity.task.ValuedTask;
 import io.github.nahkd123.voxelity.voxel.Voxel;
-import io.github.nahkd123.voxelity.world.MutableVoxelView;
+import io.github.nahkd123.voxelity.voxel.view.MutableVoxelView;
 import io.github.nahkd123.voxelity.world.World;
 
 /**

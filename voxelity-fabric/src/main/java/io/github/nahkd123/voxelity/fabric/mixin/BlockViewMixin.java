@@ -3,7 +3,7 @@ package io.github.nahkd123.voxelity.fabric.mixin;
 import org.spongepowered.asm.mixin.Mixin;
 
 import io.github.nahkd123.voxelity.voxel.Voxel;
-import io.github.nahkd123.voxelity.world.VoxelView;
+import io.github.nahkd123.voxelity.voxel.view.VoxelView;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.BlockView;
 

@@ -14,7 +14,6 @@ import io.github.nahkd123.voxelity.editor.VoxelityEditor;
 import io.github.nahkd123.voxelity.server.VoxelityServer;
 import io.github.nahkd123.voxelity.server.editor.history.ServerHistoryQueue;
 import io.github.nahkd123.voxelity.server.world.ServerWorld;
-import io.github.nahkd123.voxelity.world.World;
 
 /**
  * <p>
@@ -28,7 +27,6 @@ import io.github.nahkd123.voxelity.world.World;
  */
 public abstract class ServerVoxelityEditor implements VoxelityEditor {
 	private ServerHistoryQueue history = new ServerHistoryQueue();
-	ServerEditQueue currentEditQueue = null;
 
 	/**
 	 * <p>
@@ -39,21 +37,22 @@ public abstract class ServerVoxelityEditor implements VoxelityEditor {
 	 */
 	public abstract VoxelityServer getServer();
 
+	/**
+	 * <p>
+	 * Create a new edit request handler that will handle the edits coming from
+	 * client.
+	 * </p>
+	 * 
+	 * @param target The target world that will be modified by edit request.
+	 * @return The edit request handler.
+	 */
+	public abstract EditRequestHandler createEditRequestHandler(ServerWorld target);
+
 	@Override
 	public ServerHistoryQueue getHistory() { return history; }
 
 	@Override
 	public Set<ServerWorld> getWorlds() { return getServer().getWorlds(); }
-
-	@Override
-	public ServerEditQueue createEditQueue(World target) {
-		if (currentEditQueue != null) throw new IllegalStateException("An existing edit queue is present");
-		if (!(target instanceof ServerWorld world)) throw new IllegalArgumentException("World is not ServerWorld");
-		return currentEditQueue = new ServerEditQueue(this, world);
-	}
-
-	@Override
-	public ServerEditQueue getCurrentEditQueue() { return currentEditQueue; }
 
 	public void loadEditorData(EditorPaths paths) throws IOException {
 		ServerHistoryQueue history = this.history;
