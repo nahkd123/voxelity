@@ -14,6 +14,14 @@ public interface Vec3d {
 		return of(v.x(), v.y(), v.z());
 	}
 
+	static Vec3d ofRotation(double yaw, double pitch) {
+		double y = -Math.sin(pitch);
+		double xz = Math.cos(pitch);
+		double x = -xz * Math.sin(yaw);
+		double z = xz * Math.cos(yaw);
+		return of(x, y, z);
+	}
+
 	double x();
 
 	double y();
@@ -69,6 +77,7 @@ public interface Vec3d {
 	}
 
 	default Vec3d normalize() {
+		if (lengthSqr() == 1d) return this;
 		return div(length());
 	}
 
@@ -103,5 +112,23 @@ public interface Vec3d {
 			default -> 0d;
 			};
 		}
+	}
+
+	default double getYaw(double oldYaw) {
+		double x = x(), z = z();
+		if (x == 0d && z == 0d) return oldYaw;
+		double fullCircle = Math.PI * 2;
+		return (Math.atan2(-x, z) + fullCircle) % fullCircle;
+	}
+
+	default double getYawOrZero() { return getYaw(0d); }
+
+	default double getPitch() {
+		double x = x(), y = y(), z = z();
+		if (x == 0d && z == 0d) return y > 0 ? -Math.PI / 2 : Math.PI / 2;
+		double x2 = x * x;
+		double z2 = z * z;
+		double xz = Math.sqrt(x2 + z2);
+		return Math.atan(-y / xz);
 	}
 }

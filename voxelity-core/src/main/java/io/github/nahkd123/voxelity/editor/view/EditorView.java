@@ -1,12 +1,11 @@
 package io.github.nahkd123.voxelity.editor.view;
 
-import io.github.nahkd123.voxelity.math.Vec3d;
 import io.github.nahkd123.voxelity.world.VoxelView;
 import io.github.nahkd123.voxelity.world.World;
 
 /**
  * <p>
- * Represent a view of editor. The view must be recreated when user changed the
+ * Represent a view of editor. All views must be recreated when user changed the
  * dimension.
  * </p>
  * <p>
@@ -36,10 +35,10 @@ public interface EditorView {
 
 	/**
 	 * <p>
-	 * Get the camera (or eye) position in world coordinates.
+	 * Get the camera of this editor view.
 	 * </p>
 	 * 
-	 * @return The camera position.
+	 * @return The camera.
 	 */
-	Vec3d getCameraPosition();
+	EditorCamera getCamera();
 }

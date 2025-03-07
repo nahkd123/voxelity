@@ -3,7 +3,6 @@ package io.github.nahkd123.voxelity.editor;
 import java.util.Set;
 
 import io.github.nahkd123.voxelity.editor.history.HistoryQueue;
-import io.github.nahkd123.voxelity.editor.view.EditorView;
 import io.github.nahkd123.voxelity.world.World;
 
 /**
@@ -16,20 +15,6 @@ import io.github.nahkd123.voxelity.world.World;
  */
 public interface VoxelityEditor {
 	HistoryQueue getHistory();
-
-	/**
-	 * <p>
-	 * Get user's view of editor. The view will be recreated when user change
-	 * dimension by any means (portals, teleport command, etc).
-	 * </p>
-	 * <p>
-	 * If the view does not exists (usually because client is in configuration phase
-	 * or world is not yet available), this method will return {@code null}.
-	 * </p>
-	 * 
-	 * @return The view or {@code null}.
-	 */
-	EditorView getView();
 
 	/**
 	 * <p>
