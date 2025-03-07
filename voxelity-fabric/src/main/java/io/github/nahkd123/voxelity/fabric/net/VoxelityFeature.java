@@ -8,9 +8,9 @@ import io.github.nahkd123.voxelity.fabric.bridge.ClientConnectionBridge;
 import io.github.nahkd123.voxelity.fabric.bridge.ServerCommonNetworkHandlerBridge;
 import io.github.nahkd123.voxelity.fabric.hook.permission.PermissionManager;
 import io.github.nahkd123.voxelity.fabric.server.editor.FabricServerVoxelityEditor;
+import io.netty.buffer.ByteBuf;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.NetworkSide;
-import net.minecraft.network.PacketByteBuf;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.text.Text;
 
@@ -87,6 +87,6 @@ public enum VoxelityFeature {
 
 	public abstract boolean hasPermission(ClientConnection connection, PermissionManager permissions);
 
-	public static final PacketCodec<PacketByteBuf, VoxelityFeature> PACKET_CODEC = VoxelityPayloads
+	public static final PacketCodec<ByteBuf, VoxelityFeature> PACKET_CODEC = VoxelityPayloads
 		.createEnumCodec(List.of(VoxelityFeature.values()));
 }

@@ -38,7 +38,8 @@ public class FabricClientVoxelityEditor implements ClientVoxelityEditor {
 
 	@Override
 	public EditRequest createEditRequest(World target) {
-		// TODO Auto-generated method stub
-		return null;
+		if (!(target instanceof WorldReference reference))
+			throw new IllegalArgumentException("Invalid target argument");
+		return new EditRequestImpl(this, reference);
 	}
 }

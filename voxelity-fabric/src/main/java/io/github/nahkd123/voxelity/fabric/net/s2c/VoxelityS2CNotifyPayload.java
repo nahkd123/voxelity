@@ -31,7 +31,8 @@ public enum VoxelityS2CNotifyPayload implements CustomPayload {
 
 	public static final Id<VoxelityS2CNotifyPayload> ID = new Id<>(VoxelityFabric.id("notify"));
 	public static final PacketCodec<PacketByteBuf, VoxelityS2CNotifyPayload> PACKET_CODEC = VoxelityPayloads
-		.createEnumCodec(List.of(values()));
+		.createEnumCodec(List.of(values()))
+		.cast();
 
 	@Override
 	public Id<VoxelityS2CNotifyPayload> getId() { return ID; }

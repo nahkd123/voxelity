@@ -13,8 +13,8 @@ import java.util.Map;
 import io.github.nahkd123.voxelity.math.Vec3i;
 
 public final class Volume {
-	private static final int CHUNK_SIZE = 16 * 16 * 16;
-	private static final int SEGMENTS_PER_CHUNK = CHUNK_SIZE / 64;
+	public static final int CHUNK_SIZE = 16 * 16 * 16;
+	public static final int SEGMENTS_PER_CHUNK = CHUNK_SIZE / 64;
 	private Vec3i translation;
 	private Map<Vec3i, long[]> chunks;
 
@@ -33,12 +33,16 @@ public final class Volume {
 		this(Vec3i.ZERO, Collections.emptyList());
 	}
 
+	public Vec3i getTranslation() { return translation; }
+
 	private long[] getChunkFromVoxelPos(int x, int y, int z, boolean create) {
 		int cx = x >> 4, cy = y >> 4, cz = z >> 4;
 		Vec3i key = Vec3i.of(cx, cy, cz);
 		if (create) return chunks.computeIfAbsent(key, k -> new long[SEGMENTS_PER_CHUNK]);
 		return null;
 	}
+
+	public Map<Vec3i, long[]> getChunks() { return chunks; }
 
 	public boolean isOccupied(int x, int y, int z) {
 		long[] chunk = getChunkFromVoxelPos(x, y, z, false);
