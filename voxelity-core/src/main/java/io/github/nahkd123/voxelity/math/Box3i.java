@@ -1,5 +1,8 @@
 package io.github.nahkd123.voxelity.math;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public record Box3i(int x, int y, int z, int sizeX, int sizeY, int sizeZ) {
 	public Box3i {
 		if (sizeX * sizeY * sizeZ == 0) throw new IllegalArgumentException("Volume must have at least 1 voxel");
@@ -43,5 +46,41 @@ public record Box3i(int x, int y, int z, int sizeX, int sizeY, int sizeZ) {
 
 	public int volume() {
 		return sizeX * sizeY * sizeZ;
+	}
+
+	/**
+	 * <p>
+	 * Split this bounding box into multiple bounding boxes with chunk alignment (as
+	 * in at most 16x16x16). The main purpose of this is to split big schematic into
+	 * multiple fragments so that they all fit inside packet limit of 32767.
+	 * </p>
+	 * 
+	 * @return A set of boxes that are split into chunks from this bounding box.
+	 */
+	public Set<Box3i> splitIntoChunks() {
+		// lc: Low chunk coords (min)
+		// hc: High chunk coords (max)
+		int lcx = x >> 4, lcy = y >> 4, lcz = z >> 4;
+		int hcx = ((x + sizeX) >> 4) + 1, hcy = ((y + sizeY) >> 4) + 1, hcz = ((z + sizeZ) >> 4) + 1;
+		Set<Box3i> set = new HashSet<>(); // TODO: Create Box3i[] first for efficient data structure
+
+		for (int cy = lcy; cy <= hcy; cy++) {
+			for (int cz = lcz; cz <= hcz; cz++) {
+				for (int cx = lcx; cx <= hcx; cx++) {
+					int cwx = cx << 4, cwy = cy << 4, cwz = cz << 4;
+					int wx = Math.min(Math.max(x, cwx), cwx + 16); // Min
+					int wy = Math.min(Math.max(y, cwy), cwy + 16);
+					int wz = Math.min(Math.max(z, cwz), cwz + 16);
+					int mwx = Math.max(Math.min(x + sizeX, cwx + 16), cwx); // Max
+					int mwy = Math.max(Math.min(y + sizeY, cwy + 16), cwy);
+					int mwz = Math.max(Math.min(z + sizeZ, cwz + 16), cwz);
+					int sx = mwx - wx, sy = mwy - wy, sz = mwz - wz;
+					if (sx * sy * sz == 0) continue; // Volume is zero
+					set.add(new Box3i(wx, wy, wz, sx, sy, sz));
+				}
+			}
+		}
+
+		return set;
 	}
 }
