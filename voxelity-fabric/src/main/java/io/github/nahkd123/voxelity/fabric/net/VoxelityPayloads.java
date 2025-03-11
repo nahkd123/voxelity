@@ -7,11 +7,6 @@ import java.util.Map;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
-import io.github.nahkd123.voxelity.fabric.net.c2s.VoxelityC2SFeatureGetPayload;
-import io.github.nahkd123.voxelity.fabric.net.c2s.VoxelityC2SFeatureSetPayload;
-import io.github.nahkd123.voxelity.fabric.net.s2c.VoxelityS2CEditorStatePayload;
-import io.github.nahkd123.voxelity.fabric.net.s2c.VoxelityS2CFeaturePayload;
-import io.github.nahkd123.voxelity.fabric.net.s2c.VoxelityS2CNotifyPayload;
 import io.github.nahkd123.voxelity.math.Box3i;
 import io.github.nahkd123.voxelity.math.Vec3i;
 import io.github.nahkd123.voxelity.schematic.PackedArraySchematic;
@@ -21,29 +16,12 @@ import io.github.nahkd123.voxelity.utils.packed.PackedLongArray;
 import io.github.nahkd123.voxelity.voxel.Volume;
 import io.github.nahkd123.voxelity.voxel.Voxel;
 import io.netty.buffer.ByteBuf;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.minecraft.block.BlockState;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.network.encoding.VarInts;
 
 public class VoxelityPayloads {
-	public static void initialize() {
-		// @formatter:off
-		PayloadTypeRegistry.playS2C().register(VoxelityS2CNotifyPayload.ID, VoxelityS2CNotifyPayload.PACKET_CODEC);
-		PayloadTypeRegistry.configurationS2C().register(VoxelityS2CNotifyPayload.ID, VoxelityS2CNotifyPayload.PACKET_CODEC);
-		PayloadTypeRegistry.playS2C().register(VoxelityS2CFeaturePayload.ID, VoxelityS2CFeaturePayload.PACKET_CODEC);
-		PayloadTypeRegistry.configurationS2C().register(VoxelityS2CFeaturePayload.ID, VoxelityS2CFeaturePayload.PACKET_CODEC);
-		PayloadTypeRegistry.playS2C().register(VoxelityS2CEditorStatePayload.ID, VoxelityS2CEditorStatePayload.PACKET_CODEC);
-		PayloadTypeRegistry.configurationS2C().register(VoxelityS2CEditorStatePayload.ID, VoxelityS2CEditorStatePayload.PACKET_CODEC);
-
-		PayloadTypeRegistry.playC2S().register(VoxelityC2SFeatureGetPayload.ID, VoxelityC2SFeatureGetPayload.PACKET_CODEC);
-		PayloadTypeRegistry.configurationC2S().register(VoxelityC2SFeatureGetPayload.ID, VoxelityC2SFeatureGetPayload.PACKET_CODEC);
-		PayloadTypeRegistry.playC2S().register(VoxelityC2SFeatureSetPayload.ID, VoxelityC2SFeatureSetPayload.PACKET_CODEC);
-		PayloadTypeRegistry.configurationC2S().register(VoxelityC2SFeatureSetPayload.ID, VoxelityC2SFeatureSetPayload.PACKET_CODEC);
-		// @formatter:on
-	}
-
 	public static <E extends Enum<E>> PacketCodec<ByteBuf, E> createEnumCodec(Collection<E> possibleValues) {
 		if (possibleValues.size() == 0) throw new IllegalArgumentException("Must have at least 1 value");
 		BiMap<String, E> mapping = HashBiMap.create();

@@ -10,16 +10,22 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Set;
 
+import io.github.nahkd123.voxelity.client.editor.EditRequest;
 import io.github.nahkd123.voxelity.editor.VoxelityEditor;
 import io.github.nahkd123.voxelity.server.VoxelityServer;
 import io.github.nahkd123.voxelity.server.editor.history.ServerHistoryQueue;
 import io.github.nahkd123.voxelity.server.world.ServerWorld;
+import io.github.nahkd123.voxelity.world.World;
 
 /**
  * <p>
  * Represent server-side editor. The methods in this editor object are usually
  * remotely called by client (with exception of editor script, which evaluates
  * on server).
+ * </p>
+ * <p>
+ * Each editor instance is bounds to one connection between client and server.
+ * In the case of server editor, it is attached directly to connection object.
  * </p>
  * 
  * @see #loadEditorData(EditorPaths)
@@ -37,22 +43,17 @@ public abstract class ServerVoxelityEditor implements VoxelityEditor {
 	 */
 	public abstract VoxelityServer getServer();
 
-	/**
-	 * <p>
-	 * Create a new edit request handler that will handle the edits coming from
-	 * client.
-	 * </p>
-	 * 
-	 * @param target The target world that will be modified by edit request.
-	 * @return The edit request handler.
-	 */
-	public abstract EditRequestHandler createEditRequestHandler(ServerWorld target);
-
 	@Override
 	public ServerHistoryQueue getHistory() { return history; }
 
 	@Override
 	public Set<ServerWorld> getWorlds() { return getServer().getWorlds(); }
+
+	@Override
+	public EditRequest createEditRequest(World target) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
 	public void loadEditorData(EditorPaths paths) throws IOException {
 		ServerHistoryQueue history = this.history;

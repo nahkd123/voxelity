@@ -2,6 +2,7 @@ package io.github.nahkd123.voxelity.editor;
 
 import java.util.Set;
 
+import io.github.nahkd123.voxelity.client.editor.EditRequest;
 import io.github.nahkd123.voxelity.editor.history.HistoryQueue;
 import io.github.nahkd123.voxelity.world.World;
 
@@ -25,4 +26,14 @@ public interface VoxelityEditor {
 	 * @return A collection of world references.
 	 */
 	Set<? extends World> getWorlds();
+
+	/**
+	 * <p>
+	 * Create new edit request.
+	 * </p>
+	 * 
+	 * @param target The target world to edit.
+	 * @return The edit request.
+	 */
+	EditRequest createEditRequest(World target);
 }

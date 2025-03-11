@@ -7,37 +7,31 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
 import io.github.nahkd123.voxelity.fabric.bridge.ClientConnectionBridge;
-import io.github.nahkd123.voxelity.fabric.net.VoxelityFeature;
-import io.github.nahkd123.voxelity.fabric.server.editor.FabricServerVoxelityEditor;
+import io.github.nahkd123.voxelity.fabric.net.c2s.ServerVoxelityPayloadListener;
+import io.github.nahkd123.voxelity.fabric.permission.Capability;
 import net.minecraft.network.ClientConnection;
 
 @Mixin(ClientConnection.class)
 public abstract class ClientConnectionMixin implements ClientConnectionBridge {
 	@Unique
-	private FabricServerVoxelityEditor voxelity$serverEditor;
+	private ServerVoxelityPayloadListener voxelity$serverListener;
 
 	@Unique
-	private Set<VoxelityFeature> voxelity$features;
+	private Set<Capability> voxelity$capabilities;
 
 	@Override
-	public FabricServerVoxelityEditor voxelity$getServerEditor() {
-		return voxelity$serverEditor;
+	public Set<Capability> voxelity$getCapabilities() {
+		if (voxelity$capabilities == null) voxelity$capabilities = new HashSet<>();
+		return voxelity$capabilities;
 	}
 
 	@Override
-	public void voxelity$setServerEditor(FabricServerVoxelityEditor editor) {
-		voxelity$serverEditor = editor;
+	public void voxelity$setServerListener(ServerVoxelityPayloadListener listener) {
+		voxelity$serverListener = listener;
 	}
 
 	@Override
-	public boolean voxelity$isFeatureEnabled(VoxelityFeature feature) {
-		return voxelity$features != null && voxelity$features.contains(feature);
-	}
-
-	@Override
-	public void voxelity$setFeature(VoxelityFeature feature, boolean state) {
-		if (voxelity$features == null) voxelity$features = new HashSet<>();
-		if (state) voxelity$features.add(feature);
-		else voxelity$features.remove(feature);
+	public ServerVoxelityPayloadListener voxelity$getServerListener() {
+		return voxelity$serverListener;
 	}
 }

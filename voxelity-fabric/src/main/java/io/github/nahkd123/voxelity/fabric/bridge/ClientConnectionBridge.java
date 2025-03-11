@@ -1,14 +1,19 @@
 package io.github.nahkd123.voxelity.fabric.bridge;
 
-import io.github.nahkd123.voxelity.fabric.net.VoxelityFeature;
-import io.github.nahkd123.voxelity.fabric.server.editor.FabricServerVoxelityEditor;
+import java.util.Set;
+
+import io.github.nahkd123.voxelity.fabric.net.c2s.ServerVoxelityPayloadListener;
+import io.github.nahkd123.voxelity.fabric.net.s2c.ClientVoxelityPayloadListener;
+import io.github.nahkd123.voxelity.fabric.permission.Capability;
 
 public interface ClientConnectionBridge {
-	boolean voxelity$isFeatureEnabled(VoxelityFeature feature);
+	void voxelity$setServerListener(ServerVoxelityPayloadListener listener);
 
-	void voxelity$setFeature(VoxelityFeature feature, boolean state);
+	ServerVoxelityPayloadListener voxelity$getServerListener();
 
-	FabricServerVoxelityEditor voxelity$getServerEditor();
+	void voxelity$setClientListener(ClientVoxelityPayloadListener listener);
 
-	void voxelity$setServerEditor(FabricServerVoxelityEditor editor);
+	ClientVoxelityPayloadListener voxelity$getClientListener();
+
+	Set<Capability> voxelity$getCapabilities();
 }

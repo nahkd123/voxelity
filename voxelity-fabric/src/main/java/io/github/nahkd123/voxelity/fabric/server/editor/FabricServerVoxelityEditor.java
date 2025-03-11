@@ -2,167 +2,110 @@ package io.github.nahkd123.voxelity.fabric.server.editor;
 
 import java.io.IOException;
 
-import com.mojang.authlib.GameProfile;
-
 import io.github.nahkd123.voxelity.fabric.VoxelityFabric;
 import io.github.nahkd123.voxelity.fabric.bridge.ClientConnectionBridge;
-import io.github.nahkd123.voxelity.fabric.bridge.MinecraftServerBridge;
-import io.github.nahkd123.voxelity.fabric.net.s2c.VoxelityS2CEditorStatePayload;
-import io.github.nahkd123.voxelity.fabric.net.s2c.VoxelityS2CHistoryRefreshPayload;
-import io.github.nahkd123.voxelity.fabric.net.s2c.VoxelityS2CNotifyPayload;
+import io.github.nahkd123.voxelity.fabric.bridge.ServerCommonNetworkHandlerBridge;
+import io.github.nahkd123.voxelity.fabric.id.UserIdentity;
+import io.github.nahkd123.voxelity.fabric.net.impl.ServerVoxelityPayloadHandler;
 import io.github.nahkd123.voxelity.fabric.server.FabricVoxelityServer;
-import io.github.nahkd123.voxelity.server.editor.EditRequestHandler;
-import io.github.nahkd123.voxelity.server.editor.EditorPaths;
+import io.github.nahkd123.voxelity.server.VoxelityServer;
 import io.github.nahkd123.voxelity.server.editor.ServerVoxelityEditor;
-import io.github.nahkd123.voxelity.server.world.ServerWorld;
-import net.fabricmc.fabric.mixin.networking.accessor.ServerCommonNetworkHandlerAccessor;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.ClientConnection;
-import net.minecraft.network.NetworkSide;
-import net.minecraft.network.packet.s2c.common.CustomPayloadS2CPacket;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerCommonNetworkHandler;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 public class FabricServerVoxelityEditor extends ServerVoxelityEditor {
-	private boolean destroyed = false;
 	private FabricVoxelityServer server;
-	private ClientConnection connection;
-	private GameProfile profile;
+	private ServerVoxelityPayloadHandler handler;
+	private UserIdentity identity;
 
-	private FabricServerVoxelityEditor(FabricVoxelityServer server, ClientConnection connection, GameProfile profile) {
+	public FabricServerVoxelityEditor(FabricVoxelityServer server, ServerVoxelityPayloadHandler handler, UserIdentity identity) {
 		this.server = server;
-
-		if (connection != null) {
-			if (connection.getSide() != NetworkSide.SERVERBOUND)
-				throw new IllegalArgumentException("Connection is not server-side");
-			if (profile == null)
-				throw new IllegalArgumentException("Connection and identity (profile) must present");
-			this.connection = connection;
-			this.profile = profile;
-		}
+		this.handler = handler;
+		this.identity = identity;
 	}
 
 	/**
 	 * <p>
-	 * Get server-side editor session from server-side client connection.
+	 * Create a new server editor session that is completely detached from any
+	 * connection. The main use for this is to be used on other mods. Because it
+	 * does not attached to connection, it can't be controlled by Voxelity client.
+	 * Data will not be loaded automatically; use {@link #loadEditorData()} or
+	 * {@link #loadEditorData(io.github.nahkd123.voxelity.server.editor.EditorPaths)}
+	 * to load editor data.
 	 * </p>
 	 * 
-	 * @param connection The server-side object of client connection.
-	 * @return The editor session, or {@code null} if editor session is not created
-	 *         yet.
-	 */
-	public static FabricServerVoxelityEditor getEditor(ClientConnection connection) {
-		return ((ClientConnectionBridge) connection).voxelity$getServerEditor();
-	}
-
-	/**
-	 * <p>
-	 * Create new server-side editor session from server-side client connection. The
-	 * server will automatically notify client and a new client-side session will be
-	 * created.
-	 * </p>
-	 * <p>
-	 * Both connection and editor's identity (represented as {@link GameProfile})
-	 * must be present. To create a new editor that is not attached to any identity,
-	 * use {@link #createEditor(FabricVoxelityServer)}.
-	 * </p>
-	 * 
-	 * @param connection The server-side object of client connection.
-	 * @param profile    The identity of editor.
+	 * @param server   The server access.
+	 * @param identity The identity of user. This will be used for loading data.
 	 * @return The editor session.
 	 */
-	public static FabricServerVoxelityEditor createEditor(ClientConnection connection, GameProfile profile) {
-		FabricServerVoxelityEditor session = getEditor(connection);
-		if (session != null) return session;
-
-		// Create new editor with identity
-		if (!(connection.getPacketListener() instanceof ServerCommonNetworkHandler networkHandler))
-			throw new RuntimeException("Server-side editor can only be created from server-side object");
-		MinecraftServer mc = ((ServerCommonNetworkHandlerAccessor) networkHandler).getServer();
-		FabricVoxelityServer server = ((MinecraftServerBridge) mc).voxelity$get();
-		session = new FabricServerVoxelityEditor(server, connection, profile);
-		((ClientConnectionBridge) connection).voxelity$setServerEditor(session);
-		connection.send(new CustomPayloadS2CPacket(VoxelityS2CNotifyPayload.EDITOR_SESSION_CREATE));
-
-		if (FabricLoader.getInstance().isDevelopmentEnvironment())
-			VoxelityFabric.LOGGER.info("Created editor session for {}", profile);
-
-		try {
-			EditorPaths editorPaths = session.getServer().getEditorPaths(profile);
-			session.loadEditorData(editorPaths);
-		} catch (IOException e) {
-			e.printStackTrace();
-			VoxelityFabric.LOGGER.warn("Failed to load editor data for {}", profile);
-		}
-
-		// Sync editor states
-		if (FabricLoader.getInstance().isDevelopmentEnvironment())
-			VoxelityFabric.LOGGER.info("Sync editor states with {}...", profile);
-		connection.send(new CustomPayloadS2CPacket(VoxelityS2CEditorStatePayload.fromEditor(session)));
-		connection.send(new CustomPayloadS2CPacket(VoxelityS2CHistoryRefreshPayload.fromHistory(session.getHistory())));
-
-		return session;
+	public static FabricServerVoxelityEditor createSession(FabricVoxelityServer server, UserIdentity identity) {
+		return new FabricServerVoxelityEditor(server, null, identity);
 	}
 
 	/**
 	 * <p>
-	 * Create a new identity-free editor. Identity-free editors are meant to be used
-	 * by mods to automate editing.
+	 * Create a new server editor session, using server's identity. Data will not be
+	 * loaded automatically; use {@link #loadEditorData()} or
+	 * {@link #loadEditorData(io.github.nahkd123.voxelity.server.editor.EditorPaths)}
+	 * to load editor data.
 	 * </p>
 	 * 
-	 * @param server The server.
-	 * @return The identity-free editor session.
+	 * @param server The server access.
+	 * @return The editor session.
 	 */
-	public static FabricServerVoxelityEditor createEditor(FabricVoxelityServer server) {
-		return new FabricServerVoxelityEditor(server, null, null);
-	}
-
-	private void ensureNotDestroyed() {
-		if (destroyed) throw new IllegalStateException("Editor destroyed");
-	}
-
-	public GameProfile getProfile() { return profile; }
-
-	@Override
-	public FabricVoxelityServer getServer() { return server; }
-
-	public ServerWorld getCurrentWorld() {
-		if (connection.getPacketListener() instanceof ServerPlayNetworkHandler playHandler) {
-			ServerPlayerEntity player = playHandler.getPlayer();
-			if (player == null) return (ServerWorld) server.getMinecraftServer().getOverworld();
-			return (ServerWorld) player.getServerWorld();
-		}
-
-		return (ServerWorld) server.getMinecraftServer().getOverworld();
-	}
-
-	@Override
-	public EditRequestHandler createEditRequestHandler(ServerWorld target) {
-		ensureNotDestroyed();
-		// TODO Hook with region manager
-		return () -> target;
+	public static FabricServerVoxelityEditor createServerSession(FabricVoxelityServer server) {
+		return new FabricServerVoxelityEditor(server, null, UserIdentity.server());
 	}
 
 	/**
 	 * <p>
-	 * Close this editor session. The server will notify client that the editor
-	 * session has been close and client-side session will be destroyed.
+	 * Get editor session from user's connection. Returns {@code null} if user
+	 * haven't made request to create editor session on server yet.
 	 * </p>
+	 * 
+	 * @param connection The connection to user.
+	 * @return The editor session.
 	 */
-	public void closeSession() {
-		if (destroyed) return;
+	public static FabricServerVoxelityEditor getSessionOf(ClientConnection connection) {
+		var listener = ((ClientConnectionBridge) connection).voxelity$getServerListener();
+		return ((ServerVoxelityPayloadHandler) listener).getEditor();
+	}
 
-		if (connection != null) {
-			if (FabricLoader.getInstance().isDevelopmentEnvironment())
-				VoxelityFabric.LOGGER.info("Destroying editor session for {}", profile);
-			connection.send(new CustomPayloadS2CPacket(VoxelityS2CNotifyPayload.EDITOR_SESSION_DESTROY));
-			((ClientConnectionBridge) connection).voxelity$setServerEditor(null);
-			connection = null;
-			profile = null;
+	/**
+	 * <p>
+	 * Get editor session from player. Returns {@code null} if player haven't made
+	 * request to create editor session on server yet.
+	 * </p>
+	 * 
+	 * @param player The player.
+	 * @return The editor session.
+	 */
+	public static FabricServerVoxelityEditor getSessionOf(ServerPlayerEntity player) {
+		return getSessionOf(((ServerCommonNetworkHandlerBridge) player.networkHandler).getConnection());
+	}
+
+	@Override
+	public VoxelityServer getServer() { return server; }
+
+	public ServerVoxelityPayloadHandler getPayloadHandler() { return handler; }
+
+	public UserIdentity getIdentity() { return identity; }
+
+	public void loadEditorData() {
+		try {
+			loadEditorData(server.getEditorPaths(getIdentity()));
+		} catch (IOException e) {
+			e.printStackTrace();
+			VoxelityFabric.LOGGER.warn("Failed to load editor data for {}", getIdentity());
 		}
+	}
 
-		server = null;
+	public void saveEditorData() {
+		try {
+			saveEditorData(server.getEditorPaths(getIdentity()));
+		} catch (IOException e) {
+			e.printStackTrace();
+			VoxelityFabric.LOGGER.warn("Failed to save editor data for {}", getIdentity());
+		}
 	}
 }

@@ -5,25 +5,42 @@ import java.util.Set;
 import io.github.nahkd123.voxelity.client.editor.ClientVoxelityEditor;
 import io.github.nahkd123.voxelity.client.editor.EditRequest;
 import io.github.nahkd123.voxelity.editor.history.HistoryQueue;
-import io.github.nahkd123.voxelity.fabric.client.editor.view.ClientEditorView;
-import io.github.nahkd123.voxelity.fabric.net.s2c.VoxelityS2CEditorStatePayload;
-import io.github.nahkd123.voxelity.fabric.world.WorldReference;
+import io.github.nahkd123.voxelity.editor.view.EditorView;
+import io.github.nahkd123.voxelity.fabric.bridge.ClientConnectionBridge;
+import io.github.nahkd123.voxelity.fabric.client.net.ClientVoxelityPayloadHandler;
 import io.github.nahkd123.voxelity.world.World;
+import net.fabricmc.fabric.mixin.networking.client.accessor.ClientCommonNetworkHandlerAccessor;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.network.ClientConnection;
 
 public class FabricClientVoxelityEditor implements ClientVoxelityEditor {
+	private ClientVoxelityPayloadHandler handler;
 	private MinecraftClient client;
-	private Set<WorldReference> worlds = Set.of();
-	private ClientEditorView view = null;
 
-	public FabricClientVoxelityEditor(MinecraftClient client) {
+	public FabricClientVoxelityEditor(ClientVoxelityPayloadHandler handler, MinecraftClient client) {
+		this.handler = handler;
 		this.client = client;
 	}
 
-	public void updateState(VoxelityS2CEditorStatePayload state) {
-		worlds = state.worlds();
-		view = new ClientEditorView(client, state.currentWorld());
+	public static FabricClientVoxelityEditor getSessionOf(ClientConnection connection) {
+		var listener = ((ClientConnectionBridge) connection).voxelity$getClientListener();
+		return ((ClientVoxelityPayloadHandler) listener).getEditor();
 	}
+
+	public static FabricClientVoxelityEditor getSessionOf(ClientPlayerEntity player) {
+		return getSessionOf(((ClientCommonNetworkHandlerAccessor) player.networkHandler).getConnection());
+	}
+
+	public static FabricClientVoxelityEditor getSessionOf(MinecraftClient client) {
+		return getSessionOf(((ClientCommonNetworkHandlerAccessor) client.getNetworkHandler()).getConnection());
+	}
+
+	public static FabricClientVoxelityEditor getSession() { return getSessionOf(MinecraftClient.getInstance()); }
+
+	public ClientVoxelityPayloadHandler getHandler() { return handler; }
+
+	public MinecraftClient getClient() { return client; }
 
 	@Override
 	public HistoryQueue getHistory() { // TODO Auto-generated method stub
@@ -31,15 +48,18 @@ public class FabricClientVoxelityEditor implements ClientVoxelityEditor {
 	}
 
 	@Override
-	public Set<? extends World> getWorlds() { return worlds; }
+	public Set<? extends World> getWorlds() { // TODO Auto-generated method stub
+		return null;
+	}
 
 	@Override
-	public ClientEditorView getView() { return view; }
+	public EditorView getView() { // TODO Auto-generated method stub
+		return null;
+	}
 
 	@Override
 	public EditRequest createEditRequest(World target) {
-		if (!(target instanceof WorldReference reference))
-			throw new IllegalArgumentException("Invalid target argument");
-		return new EditRequestImpl(this, reference);
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

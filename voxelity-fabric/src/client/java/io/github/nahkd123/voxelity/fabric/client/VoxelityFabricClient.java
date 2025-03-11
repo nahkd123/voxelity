@@ -1,36 +1,41 @@
 package io.github.nahkd123.voxelity.fabric.client;
 
 import io.github.nahkd123.voxelity.fabric.VoxelityFabric;
-import io.github.nahkd123.voxelity.fabric.client.bridge.MinecraftClientBridge;
-import io.github.nahkd123.voxelity.fabric.client.command.VoxelityClientCommand;
-import io.github.nahkd123.voxelity.fabric.client.net.VoxelityS2CPayloadHandlers;
+import io.github.nahkd123.voxelity.fabric.bridge.ClientConnectionBridge;
+import io.github.nahkd123.voxelity.fabric.client.net.ClientVoxelityPayloadHandler;
+import io.github.nahkd123.voxelity.fabric.net.s2c.ClientVoxelityPayloadListener;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationConnectionEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
+import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationNetworking;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.mixin.networking.client.accessor.ClientCommonNetworkHandlerAccessor;
 
 public class VoxelityFabricClient implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		VoxelityFabric.LOGGER.info("Hello from client!");
 
-		VoxelityS2CPayloadHandlers.initialize();
+		ClientVoxelityPayloadListener.registerPayloads(id -> {
+			ClientConfigurationNetworking.registerGlobalReceiver(id, (payload, context) -> {
+				var connection = ((ClientCommonNetworkHandlerAccessor) context.networkHandler()).getConnection();
+				var listener = ((ClientConnectionBridge) connection).voxelity$getClientListener();
+				payload.apply(listener);
+			});
 
-		ClientLoginConnectionEvents.INIT.register((handler, client) -> resetClientStates(client));
-		ClientConfigurationConnectionEvents.DISCONNECT.register((handler, client) -> resetClientStates(client));
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> resetClientStates(client));
-
-		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-			dispatcher.register(VoxelityClientCommand.ROOT);
+			ClientPlayNetworking.registerGlobalReceiver(id, (payload, context) -> {
+				// There can be at most 1 play state network handler on client it seems
+				var connection = ((ClientCommonNetworkHandlerAccessor) context.client().getNetworkHandler())
+					.getConnection();
+				var listener = ((ClientConnectionBridge) connection).voxelity$getClientListener();
+				payload.apply(listener);
+			});
 		});
-	}
 
-	private void resetClientStates(MinecraftClient client) {
-		if (FabricLoader.getInstance().isDevelopmentEnvironment())
-			VoxelityFabric.LOGGER.info("Resetting Voxelity client states...");
-		((MinecraftClientBridge) client).voxelity$reset();
+		ClientConfigurationConnectionEvents.INIT.register((handler, client) -> {
+			var connection = ((ClientCommonNetworkHandlerAccessor) handler).getConnection();
+			var listener = new ClientVoxelityPayloadHandler(connection, client);
+			((ClientConnectionBridge) connection).voxelity$setClientListener(listener);
+			VoxelityFabric.devlog("Attached Voxelity payloads handler to client connection!");
+		});
 	}
 }

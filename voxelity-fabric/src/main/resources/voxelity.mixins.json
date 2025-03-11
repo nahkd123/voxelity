@@ -10,7 +10,6 @@
 		"IdentifierMixin",
 		"MinecraftServerMixin",
 		"ModifiableWorldMixin",
-		"PlayerManagerMixin",
 		"ServerCommonNetworkHandlerMixin",
 		"ServerPlayerEntityMixin",
 		"ServerWorldMixin"

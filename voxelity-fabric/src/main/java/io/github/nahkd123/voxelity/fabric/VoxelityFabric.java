@@ -3,29 +3,22 @@ package io.github.nahkd123.voxelity.fabric;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.mojang.authlib.GameProfile;
-
 import io.github.nahkd123.voxelity.Voxelity;
+import io.github.nahkd123.voxelity.fabric.bridge.ClientConnectionBridge;
 import io.github.nahkd123.voxelity.fabric.bridge.MinecraftServerBridge;
 import io.github.nahkd123.voxelity.fabric.bridge.ServerCommonNetworkHandlerBridge;
-import io.github.nahkd123.voxelity.fabric.hook.permission.PermissionManager;
-import io.github.nahkd123.voxelity.fabric.net.VoxelityC2SPayloadHandlers;
-import io.github.nahkd123.voxelity.fabric.net.VoxelityFeature;
-import io.github.nahkd123.voxelity.fabric.net.VoxelityPayloads;
+import io.github.nahkd123.voxelity.fabric.net.c2s.ServerVoxelityPayloadListener;
+import io.github.nahkd123.voxelity.fabric.net.impl.ServerVoxelityPayloadHandler;
 import io.github.nahkd123.voxelity.fabric.registry.FabricRegistries;
 import io.github.nahkd123.voxelity.fabric.server.FabricVoxelityServer;
-import io.github.nahkd123.voxelity.fabric.server.editor.FabricServerVoxelityEditor;
 import io.github.nahkd123.voxelity.fabric.voxel.FabricVoxels;
 import io.github.nahkd123.voxelity.registry.Registries;
 import io.github.nahkd123.voxelity.server.world.ServerWorld;
 import io.github.nahkd123.voxelity.voxel.Voxels;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerConfigurationConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.network.ClientConnection;
-import net.minecraft.server.PlayerManager;
 import net.minecraft.util.Identifier;
 
 public class VoxelityFabric implements ModInitializer, Voxelity {
@@ -49,23 +42,12 @@ public class VoxelityFabric implements ModInitializer, Voxelity {
 		LOGGER.info("Initializing Fabric platform...");
 		platform = this;
 
-		VoxelityPayloads.initialize();
-		VoxelityC2SPayloadHandlers.initialize();
+		ServerVoxelityPayloadListener.registerPayloads();
 
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-			var bridge = (ServerCommonNetworkHandlerBridge) handler;
-			ClientConnection connection = bridge.getConnection();
-
-			if (VoxelityFeature.EDITOR.isEnabled(connection)) {
-				GameProfile profile = bridge.voxelity$getGameProfile();
-				FabricServerVoxelityEditor.createEditor(connection, profile);
-			}
-		});
-
-		ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
-			PlayerManager playerManager = newPlayer.getServer().getPlayerManager();
-			GameProfile gameProfile = newPlayer.getGameProfile();
-			PermissionManager.recalculatePermissions(playerManager, gameProfile);
+		ServerConfigurationConnectionEvents.BEFORE_CONFIGURE.register((handler, server) -> {
+			var connection = ((ServerCommonNetworkHandlerBridge) handler).getConnection();
+			var listener = new ServerVoxelityPayloadHandler(connection);
+			((ClientConnectionBridge) connection).voxelity$setServerListener(listener);
 		});
 
 		if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
@@ -81,5 +63,10 @@ public class VoxelityFabric implements ModInitializer, Voxelity {
 
 	public static Identifier id(String id) {
 		return Identifier.of(MODID, id);
+	}
+
+	public static void devlog(String message, Object... args) {
+		if (!FabricLoader.getInstance().isDevelopmentEnvironment()) return;
+		LOGGER.info(message, args);
 	}
 }

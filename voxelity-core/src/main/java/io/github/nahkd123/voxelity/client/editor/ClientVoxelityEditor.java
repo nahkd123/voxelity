@@ -2,7 +2,6 @@ package io.github.nahkd123.voxelity.client.editor;
 
 import io.github.nahkd123.voxelity.editor.VoxelityEditor;
 import io.github.nahkd123.voxelity.editor.view.EditorView;
-import io.github.nahkd123.voxelity.world.World;
 
 public interface ClientVoxelityEditor extends VoxelityEditor {
 	/**
@@ -15,14 +14,4 @@ public interface ClientVoxelityEditor extends VoxelityEditor {
 	 * @return The view or {@code null}.
 	 */
 	EditorView getView();
-
-	/**
-	 * <p>
-	 * Create new edit request.
-	 * </p>
-	 * 
-	 * @param target The target world to edit.
-	 * @return The edit request.
-	 */
-	EditRequest createEditRequest(World target);
 }
